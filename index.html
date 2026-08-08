@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lumeo — Ruban LED RGB connecté</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink: #08090d;
+    --panel: #12141c;
+    --panel-2: #181b26;
+    --line: #262a38;
+    --violet: #8b5cf6;
+    --cyan: #35e6c4;
+    --coral: #ff5577;
+    --text: #f4f5f8;
+    --muted: #8b93a5;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background: var(--ink);
+    color: var(--text);
+    font-family:'Inter',Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{ font-family:'Space Grotesk',sans-serif; }
+  .mono{ font-family:'JetBrains Mono',monospace; }
+  a{ color:inherit; }
+  img{ display:block; max-width:100%; }
+  .wrap{ max-width:1120px; margin:0 auto; padding:0 28px; }
+
+  /* signature: animated RGB strip */
+  .strip{
+    height:4px;
+    width:100%;
+    background: linear-gradient(90deg,#8b5cf6,#35e6c4,#ff5577,#f7d047,#8b5cf6);
+    background-size: 300% 100%;
+    animation: flow 8s linear infinite;
+  }
+  @keyframes flow{
+    0%{ background-position: 0% 0; }
+    100%{ background-position: 300% 0; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .strip{ animation:none; background-position:0 0; }
+  }
+
+  /* nav */
+  header{
+    position: sticky; top:0; z-index: 40;
+    background: rgba(8,9,13,0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  nav{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 16px 28px;
+    max-width:1120px; margin:0 auto;
+  }
+  .logo{
+    display:flex; align-items:center; gap:10px;
+    font-weight:700; font-size:1.1rem; letter-spacing:-0.01em;
+  }
+  .logo-dot{
+    width:10px; height:10px; border-radius:50%;
+    background: linear-gradient(135deg,#8b5cf6,#35e6c4);
+    box-shadow: 0 0 12px #8b5cf6;
+  }
+  .navlinks{ display:flex; gap:28px; font-size:0.88rem; color:var(--muted); }
+  .navlinks a:hover{ color:var(--text); }
+  .navcta{
+    font-size:0.85rem; font-weight:600;
+    background: var(--text); color: var(--ink);
+    padding:9px 16px; border-radius:8px;
+    text-decoration:none;
+  }
+  @media (max-width:720px){ .navlinks{ display:none; } }
+
+  /* hero */
+  .hero{
+    padding: 76px 0 60px;
+    display:grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap:56px;
+    align-items:center;
+  }
+  @media (max-width:900px){ .hero{ grid-template-columns:1fr; padding-top:48px; } }
+
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:0.76rem; font-weight:600; letter-spacing:0.06em; text-transform:uppercase;
+    color: var(--cyan);
+    background: rgba(53,230,196,0.08);
+    border:1px solid rgba(53,230,196,0.25);
+    padding:6px 12px; border-radius:999px;
+    margin-bottom:22px;
+  }
+  .hero h1{
+    font-size: clamp(2.1rem, 4.2vw, 3.1rem);
+    line-height:1.08;
+    font-weight:700;
+    letter-spacing:-0.02em;
+    margin-bottom:18px;
+  }
+  .hero h1 em{
+    font-style:normal;
+    background: linear-gradient(90deg,#8b5cf6,#35e6c4);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .hero p.lead{
+    color: var(--muted);
+    font-size:1.05rem;
+    line-height:1.6;
+    max-width: 46ch;
+    margin-bottom:30px;
+  }
+
+  .price-block{
+    display:flex; align-items:flex-end; gap:14px; margin-bottom:8px; flex-wrap:wrap;
+  }
+  .price-now{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:2.6rem; font-weight:700; letter-spacing:-0.02em;
+  }
+  .price-was{
+    font-size:1rem; color:var(--muted); text-decoration:line-through;
+  }
+  .price-tag{
+    font-size:0.72rem; font-weight:700; letter-spacing:0.04em; text-transform:uppercase;
+    background: rgba(255,85,119,0.12); color:var(--coral);
+    border:1px solid rgba(255,85,119,0.3);
+    padding:4px 9px; border-radius:6px;
+  }
+  .price-note{ font-size:0.85rem; color:var(--muted); margin-bottom:28px; }
+
+  .cta-row{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:30px; }
+  .btn{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:0.95rem; font-weight:600;
+    padding:13px 22px; border-radius:10px;
+    text-decoration:none; border:1px solid transparent;
+    cursor:pointer;
+  }
+  .btn-primary{
+    background: linear-gradient(90deg,#8b5cf6,#6d5cf6);
+    color:#fff;
+    box-shadow: 0 8px 24px rgba(139,92,246,0.35);
+  }
+  .btn-primary:hover{ filter:brightness(1.08); }
+  .btn-ghost{
+    background: transparent; color: var(--text);
+    border-color: var(--line);
+  }
+  .btn-ghost:hover{ border-color:#3a3f52; }
+
+  .trust{ display:flex; gap:22px; flex-wrap:wrap; font-size:0.82rem; color:var(--muted); }
+  .trust span{ display:flex; align-items:center; gap:6px; }
+  .dot{ width:6px; height:6px; border-radius:50%; background:var(--cyan); }
+
+  /* hero visual */
+  .visual{
+    position:relative;
+    border-radius:20px;
+    padding:2px;
+    background: linear-gradient(135deg,#8b5cf6,#35e6c4,#ff5577);
+  }
+  .visual-inner{
+    background: var(--panel);
+    border-radius:18px;
+    overflow:hidden;
+    position:relative;
+  }
+  .visual img{ width:100%; aspect-ratio:1/1; object-fit:cover; }
+  .visual-caption{
+    padding:16px 20px;
+    display:flex; justify-content:space-between; align-items:center;
+    border-top:1px solid var(--line);
+    font-size:0.8rem; color:var(--muted);
+  }
+
+  /* config panel embedded in hero */
+  .config{
+    margin-top:20px;
+    background: var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:18px;
+    display:flex; flex-direction:column; gap:14px;
+  }
+  .config-row{ display:flex; align-items:center; justify-content:space-between; gap:14px; }
+  .config-row label{ font-size:0.82rem; color:var(--muted); }
+  .config-row input{
+    width:110px; background:var(--ink); border:1px solid var(--line);
+    color:var(--text); border-radius:8px; padding:8px 10px; font-size:0.9rem;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .config-row input:focus{ outline:none; border-color:var(--violet); }
+
+  /* section shared */
+  section{ padding: 64px 0; }
+  .section-head{ max-width:640px; margin-bottom:44px; }
+  .section-head .eyebrow{ margin-bottom:14px; }
+  .section-head h2{ font-size:clamp(1.6rem,3vw,2.2rem); font-weight:700; letter-spacing:-0.01em; margin-bottom:12px; }
+  .section-head p{ color:var(--muted); line-height:1.6; }
+
+  /* features */
+  .features{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:18px;
+  }
+  @media (max-width:900px){ .features{ grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:560px){ .features{ grid-template-columns:1fr; } }
+  .feature{
+    background: var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:22px;
+  }
+  .feature-icon{
+    width:36px; height:36px; border-radius:9px;
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:16px;
+    background: rgba(139,92,246,0.12);
+    border:1px solid rgba(139,92,246,0.3);
+  }
+  .feature h3{ font-size:1rem; font-weight:600; margin-bottom:8px; }
+  .feature p{ font-size:0.88rem; color:var(--muted); line-height:1.55; }
+
+  /* how it works */
+  .steps{ display:grid; grid-template-columns:repeat(3,1fr); gap:24px; }
+  @media (max-width:820px){ .steps{ grid-template-columns:1fr; } }
+  .step{ position:relative; padding-left:6px; }
+  .step-num{
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.78rem; color:var(--cyan);
+    border:1px solid rgba(53,230,196,0.3);
+    background:rgba(53,230,196,0.08);
+    width:30px; height:30px; border-radius:8px;
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:14px;
+  }
+  .step h3{ font-size:1rem; font-weight:600; margin-bottom:6px; }
+  .step p{ font-size:0.88rem; color:var(--muted); line-height:1.55; }
+
+  /* specs */
+  .specs{
+    background: var(--panel);
+    border:1px solid var(--line);
+    border-radius:16px;
+    overflow:hidden;
+  }
+  .spec-row{
+    display:grid; grid-template-columns:200px 1fr;
+    padding:16px 22px;
+    font-size:0.9rem;
+    border-bottom:1px solid var(--line);
+  }
+  .spec-row:last-child{ border-bottom:none; }
+  .spec-row dt{ color:var(--muted); }
+  .spec-row dd{ font-family:'JetBrains Mono',monospace; font-size:0.85rem; }
+  @media (max-width:560px){ .spec-row{ grid-template-columns:1fr; gap:4px; } }
+
+  /* final cta */
+  .final{
+    text-align:center;
+    padding: 76px 0 90px;
+  }
+  .final h2{ font-size:clamp(1.8rem,4vw,2.6rem); font-weight:700; margin-bottom:14px; letter-spacing:-0.02em; }
+  .final p{ color:var(--muted); margin-bottom:32px; }
+  .final .price-now{ display:block; margin-bottom:26px; }
+
+  footer{
+    border-top:1px solid var(--line);
+    padding: 30px 0 40px;
+  }
+  .foot-row{
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;
+    font-size:0.82rem; color:var(--muted);
+  }
+  .foot-row a{ text-decoration:none; }
+  .foot-row a:hover{ color:var(--text); }
+</style>
+</head>
+<body>
+
+<div class="strip"></div>
+<header>
+  <nav>
+    <div class="logo"><span class="logo-dot"></span>Lumeo</div>
+    <div class="navlinks">
+      <a href="#produit">Produit</a>
+      <a href="#specs">Caractéristiques</a>
+      <a href="#comment">Installation</a>
+    </div>
+    <a class="navcta" href="#produit">Voir le prix</a>
+  </nav>
+</header>
+
+<main class="wrap">
+  <section class="hero" id="produit">
+    <div>
+      <span class="eyebrow"><span class="dot"></span>Bluetooth + télécommande</span>
+      <h1>Un néon LED <em>USB</em> qui suit vos envies</h1>
+      <p class="lead">Tube néon LED RGB flexible, alimenté en USB, pilotable via application Bluetooth ou télécommande fournie. Étanche IP65, idéal en intérieur comme en extérieur.</p>
+
+      <div class="price-block">
+        <span class="price-now mono" id="priceNow">18,87 €</span>
+        <span class="price-was mono" id="priceWas">6,29 €</span>
+        <span class="price-tag" id="priceTag">Tarif x3</span>
+      </div>
+      <p class="price-note">Prix ajusté manuellement (×3 du tarif de base) — modifiable ci-dessous.</p>
+
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://fr.aliexpress.com/item/1005007846521771.html" target="_blank" rel="noopener">Voir la fiche produit ↗</a>
+        <a class="btn btn-ghost" href="#specs">Caractéristiques</a>
+      </div>
+
+      <div class="trust">
+        <span><span class="dot"></span>1 à 5 mètres disponibles</span>
+        <span><span class="dot"></span>Alimentation USB</span>
+        <span><span class="dot"></span>Étanche IP65</span>
+      </div>
+
+      <div class="config">
+        <div class="config-row">
+          <label for="baseInput">Prix de base (€)</label>
+          <input id="baseInput" type="number" step="0.01" min="0" value="6.29">
+        </div>
+        <div class="config-row">
+          <label for="multInput">Multiplicateur</label>
+          <input id="multInput" type="number" step="1" min="1" value="3">
+        </div>
+      </div>
+    </div>
+
+    <div class="visual">
+      <div class="visual-inner">
+        <img src="https://ae-pic-a1.aliexpress-media.com/kf/S5a6fc3fcab0b44288fa0bb230c5055d4X.jpg" alt="Néon LED RGB USB">
+        <div class="visual-caption">
+          <span>Néon LED RGB — USB / Bluetooth</span>
+          <span>1m / 2m / 3m / 4m / 5m</span>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="strip"></div>
+
+<main class="wrap">
+  <section id="fonctions">
+    <div class="section-head">
+      <span class="eyebrow"><span class="dot"></span>Fonctionnalités</span>
+      <h2>Pensé pour une installation simple</h2>
+      <p>Quatre longueurs, une seule application, aucun outil nécessaire.</p>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">🎨</div>
+        <h3>Néon RGB</h3>
+        <p>Un tube diffusant, effet néon continu, sans points lumineux visibles.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">📶</div>
+        <h3>Bluetooth + app</h3>
+        <p>Réglez couleurs et effets depuis votre smartphone en Bluetooth.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🎛️</div>
+        <h3>Télécommande incluse</h3>
+        <p>Un contrôle rapide sans smartphone, directement à portée de main.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">💧</div>
+        <h3>Étanche IP65</h3>
+        <p>Résiste aux projections d'eau, utilisable en intérieur comme en extérieur.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="comment">
+    <div class="section-head">
+      <span class="eyebrow"><span class="dot"></span>Installation</span>
+      <h2>Trois étapes, aucun électricien</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <h3>Positionner le néon</h3>
+        <p>Fixez le tube avec les clips ou l'adhésif fournis, en intérieur ou en extérieur.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <h3>Brancher en USB</h3>
+        <p>Reliez le câble USB à une prise secteur, un ordinateur ou une batterie externe.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <h3>Choisir votre pilotage</h3>
+        <p>Utilisez la télécommande fournie ou associez l'application Bluetooth pour plus de réglages.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="specs">
+    <div class="section-head">
+      <span class="eyebrow"><span class="dot"></span>Caractéristiques</span>
+      <h2>Fiche technique</h2>
+    </div>
+    <dl class="specs">
+      <div class="spec-row"><dt>Longueurs disponibles</dt><dd>1 m / 2 m / 3 m / 4 m / 5 m</dd></div>
+      <div class="spec-row"><dt>Type de LED</dt><dd>Néon RGB flexible</dd></div>
+      <div class="spec-row"><dt>Alimentation</dt><dd>USB</dd></div>
+      <div class="spec-row"><dt>Contrôle</dt><dd>Application Bluetooth + télécommande</dd></div>
+      <div class="spec-row"><dt>Étanchéité</dt><dd>IP65</dd></div>
+      <div class="spec-row"><dt>Usage recommandé</dt><dd>Décoration DIY, intérieur et extérieur</dd></div>
+    </dl>
+  </section>
+
+  <section class="final">
+    <span class="eyebrow"><span class="dot"></span>Prêt à commander</span>
+    <h2>Transformez votre pièce ce soir</h2>
+    <span class="price-now mono" id="priceNowFinal">18,87 €</span>
+    <p>Tarif affiché avec le multiplicateur configuré ci-dessus.</p>
+    <a class="btn btn-primary" href="https://fr.aliexpress.com/item/1005007846521771.html" target="_blank" rel="noopener">Voir la fiche produit ↗</a>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot-row">
+    <span>Lumeo — page générée à titre d'exemple</span>
+    <a href="https://fr.aliexpress.com/item/1005007846521771.html" target="_blank" rel="noopener">Produit original sur AliExpress ↗</a>
+  </div>
+</footer>
+
+<script>
+  const baseInput = document.getElementById('baseInput');
+  const multInput = document.getElementById('multInput');
+  const priceNow = document.getElementById('priceNow');
+  const priceWas = document.getElementById('priceWas');
+  const priceTag = document.getElementById('priceTag');
+  const priceNowFinal = document.getElementById('priceNowFinal');
+
+  function formatEUR(n){
+    return n.toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
+  }
+
+  function update(){
+    const base = parseFloat(baseInput.value) || 0;
+    const mult = parseFloat(multInput.value) || 1;
+    const now = base * mult;
+    priceWas.textContent = formatEUR(base);
+    priceNow.textContent = formatEUR(now);
+    priceNowFinal.textContent = formatEUR(now);
+    priceTag.textContent = `Tarif x${mult}`;
+  }
+
+  baseInput.addEventListener('input', update);
+  multInput.addEventListener('input', update);
+  update();
+</script>
+
+</body>
+</html>
